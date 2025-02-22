@@ -2,4 +2,4 @@
 
 ## WIP
 
-will sooncontains the code which implements GoldenDomeVT.com and SmartTranscripts
+will soon contain the code which implements GoldenDomeVT.com and SmartTranscripts
