@@ -24,7 +24,7 @@ This repository is particular to the site GoldenDomeVT.com, which is a factory f
  - dependendencies:
    - boto3
    - botocore.exceptions
-   - AWS credentilas either in envronmental variables or ~/.aws/credentials and ~/.aws/config files.
+   - AWS credentials either in envronmental variables or ~/.aws/credentials and ~/.aws/config files.
 
 
 
