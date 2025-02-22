@@ -19,12 +19,12 @@ This repository is particular to the site GoldenDomeVT.com, which is a factory f
    - ffmpeg
 
 2. **bototools3.py**
- - function: tools for working with s3 buckets on AWS
+ - function: tools for working with s3 buckets
  - implementation in goldendomevt: used in youtubetos3.py as well as the lambda routines s3deepgrams3.py and jsontohtml.py for all bucket interaction
  - dependendencies:
    - boto3
    - botocore.exceptions
-   - AWS credentials either in envronmental variables or ~/.aws/credentials and ~/.aws/config files.
+   - AWS credentials either in environmental variables or ~/.aws/credentials and ~/.aws/config files.
 
 
 
