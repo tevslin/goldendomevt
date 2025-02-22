@@ -1,4 +1,4 @@
-# goldendomevt
+# GoldenDomeVT
 
 ## WIP
 
