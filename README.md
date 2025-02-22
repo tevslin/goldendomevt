@@ -1,2 +1,5 @@
 # goldendomevt
-contains the code which implements GoldenDomeVT.com and SmarTranscripts
+
+##WIP
+
+will sooncontains the code which implements GoldenDomeVT.com and SmartTranscripts
