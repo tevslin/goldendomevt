@@ -8,7 +8,7 @@ This repository is particular to the site GoldenDomeVT.com, which is a factory f
 ## The Factory
 The factory currently runs partly on a Google debian instance and partly on AWS. Storage for the factory is S3 buckets. The part which runs on Google would run on any Linux system. the only real Linux dependency is the cron job. Absent that the code would run whereever Python is supported. Similarly the code which runs on AWS is dependent for triggering on S3 bucket events but, other than the triggering dependency, can be called in any Python environment.
 
-
+![The Factory](/assets/factory.png)
 
 ## BOM
 1. **youtubetos3.py**
