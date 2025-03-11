@@ -30,9 +30,19 @@ The factory currently runs partly on a Google debian instance and partly on AWS.
 -implementation in goldendomevt: used by youtubetos3 to log activity
 
 4. **s3deepgrams3.py**
-- function: invokes deepgram api
-
-6. **youtubeapi.py**
+- function: invokes DeepGram API to upload audio file from and S3 bucket to DG for transcription and have DeepGram put the resulting JSON back in the same S3 bucket using a presigned URL.
+- implementation in goldendoemvt: the code contains a wrapper so it can be invoked as an AWS lambda function triggred by the arrival of an audio file in a specified bucket. The interface to DG is separated from the lambda function wrapper so that the code can also be used in other contexts.
+- limitations:
+  - the interface to DeppGram is specific to S3 buckets.
+  - only handles
+  - needs requisite permissions when operating on AWS
+-dependencies
+  - requires DeepGram API key assumed to be available as os.environ.get('DEEPGRAM_API_KEY'). Made available on AWS as part of thr lambda function setup
+  - boto3
+  - botocore.exceptions
+  - deepgram
+  - 
+5. **youtubeapi.py**
 - function: interface to googleapiclent routines for YouTube information access
 - implementation in goldendomevt:
   - used by youytubetos3 to retrieve list of videos for channel and info about videos.
