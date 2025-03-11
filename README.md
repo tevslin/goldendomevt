@@ -27,7 +27,22 @@ The factory currently runs partly on a Google debian instance and partly on AWS.
     to both the console and separate disk files for syslog and syserr, with default paths
     based on the operating system. If no log files are specified on a Linux instance,
     logs are sent directly to Google Cloud Logging.
--implementation in goldendomevt: used by youtubetos3 to log activity-
+-implementation in goldendomevt: used by youtubetos3 to log activity
+
+4. **youtubeapi.py**
+- function: interface to googleapiclent routines for YouTube information access
+- implementation in goldendomevt:
+  - used by youytubetos3 to retrieve list of videos for channel and info about videos.
+  - used by utilities to get youtube statistics and to map channle handles to channel ids.
+- limitations:
+  - assumes all times are Esatern US timezone
+  - subject to YouTube limits of API requets per day per API key
+- dependencies
+  - API key (from Google). Assumed to be in .env as YOUTUBE_API_KEY.
+  - googleapiclient.discovery
+  - pytz
+  - zoneinfo
+  - dotenv 
     
 4. **youtubetos3.py**
  - function: run periodically to scan for new videos posted on the list of YouTube channels in committees.pk1. Downloads audio only. Uses its access to s3 buckets to see if a video is actually new and uploads both the resulting audio file and metadata as well as WIP information to S3 buckets.
