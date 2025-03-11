@@ -29,7 +29,10 @@ The factory currently runs partly on a Google debian instance and partly on AWS.
     logs are sent directly to Google Cloud Logging.
 -implementation in goldendomevt: used by youtubetos3 to log activity
 
-4. **youtubeapi.py**
+4. **s3deepgrams3.py**
+- function: invokes deepgram api
+
+6. **youtubeapi.py**
 - function: interface to googleapiclent routines for YouTube information access
 - implementation in goldendomevt:
   - used by youytubetos3 to retrieve list of videos for channel and info about videos.
@@ -44,7 +47,7 @@ The factory currently runs partly on a Google debian instance and partly on AWS.
   - zoneinfo
   - dotenv 
     
-4. **youtubetos3.py**
+6. **youtubetos3.py**
  - function: run periodically to scan for new videos posted on the list of YouTube channels in committees.pk1. Downloads audio only. Uses its access to s3 buckets to see if a video is actually new and uploads both the resulting audio file and metadata as well as WIP information to S3 buckets.
  - implementation in goldendomevt: runs as a cron job on a google debian server instance although can run on locally on Windows, Mac, or Linux.
  - limitations: assumes that there is only one playlist per channel so needs to be extended in environments where mutliple playlists are used. 
