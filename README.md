@@ -33,7 +33,7 @@ The factory currently runs partly on a Google debian instance and partly on AWS.
 - function: invokes DeepGram API to upload audio file from and S3 bucket to DG for transcription and have DeepGram put the resulting JSON back in the same S3 bucket using a presigned URL.
 - implementation in goldendoemvt: the code contains a wrapper so it can be invoked as an AWS lambda function triggred by the arrival of an audio file in a specified bucket. The interface to DG is separated from the lambda function wrapper so that the code can also be used in other contexts.
 - limitations:
-  - the interface to DeppGram is specific to S3 buckets.
+  - the interface to DeepGram is specific to S3 buckets.
   - only handles
   - needs requisite permissions when operating on AWS
 -dependencies
