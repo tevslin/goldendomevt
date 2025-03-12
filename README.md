@@ -22,27 +22,41 @@ The factory currently runs partly on a Google debian instance and partly on AWS.
 2. **committees.pk1**
 - pickle of a dictionary where the keys are committee handles and the values are the YouTube IDs of the channels which correspond to the committee. Input to youtubetos3.py. These were scraped from the Vermont legislative directory. Use for other jurisdictions obviously requires building your own dictionary in the format.
 
-3. **mylogger.py**
+3. **jsontohtml.py**
+-functions:
+ - parses JSON from DeepGram to format transcript with speaker diarization 
+ - invokes ChatGPT to deduce actual speaker names from context and hint files
+ - formats final transcript as SmartTranscrpt HTML and puts in public S3 bucket
+- implementation in goldendoemvt:
+ - the code contains a wrapper so it can be invoked as an AWS lambda function triggred by the arrival of a JSON file in a specified bucket
+ - the interface to ChatGPT and the formatting of the HTML file are separated from the lambda function wrapper so that the code can also be used in other contexts
+-dependencies:
+ - bototools
+ - meetingreporter   
+
+4. **mylogger.py**
 - function: Sets up logging configuration to output JSON-formatted logs in Google Cloud format
     to both the console and separate disk files for syslog and syserr, with default paths
     based on the operating system. If no log files are specified on a Linux instance,
     logs are sent directly to Google Cloud Logging.
 -implementation in goldendomevt: used by youtubetos3 to log activity
 
-4. **s3deepgrams3.py**
+5. **s3deepgrams3.py**
 - function: invokes DeepGram API to upload audio file from and S3 bucket to DG for transcription and have DeepGram put the resulting JSON back in the same S3 bucket using a presigned URL.
-- implementation in goldendoemvt: the code contains a wrapper so it can be invoked as an AWS lambda function triggred by the arrival of an audio file in a specified bucket. The interface to DG is separated from the lambda function wrapper so that the code can also be used in other contexts.
+- implementation in goldendoemvt:
+ - the code contains a wrapper so it can be invoked as an AWS lambda function triggered by the arrival of an audio file in a specified bucket
+ - the interface to DG is separated from the lambda function wrapper so that the code can also be used in other contexts
 - limitations:
   - the interface to DeepGram is specific to S3 buckets.
   - only handles
   - needs requisite permissions when operating on AWS
--dependencies
+-dependencies:
   - requires DeepGram API key assumed to be available as os.environ.get('DEEPGRAM_API_KEY'). Made available on AWS as part of thr lambda function setup
   - boto3
   - botocore.exceptions
   - deepgram
   - 
-5. **youtubeapi.py**
+6. **youtubeapi.py**
 - function: interface to googleapiclent routines for YouTube information access
 - implementation in goldendomevt:
   - used by youytubetos3 to retrieve list of videos for channel and info about videos.
@@ -50,14 +64,14 @@ The factory currently runs partly on a Google debian instance and partly on AWS.
 - limitations:
   - assumes all times are Esatern US timezone
   - subject to YouTube limits of API requets per day per API key
-- dependencies
+- dependencies:
   - API key (from Google). Assumed to be in .env as YOUTUBE_API_KEY.
   - googleapiclient.discovery
   - pytz
   - zoneinfo
   - dotenv 
     
-6. **youtubetos3.py**
+7. **youtubetos3.py**
  - function: run periodically to scan for new videos posted on the list of YouTube channels in committees.pk1. Downloads audio only. Uses its access to s3 buckets to see if a video is actually new and uploads both the resulting audio file and metadata as well as WIP information to S3 buckets.
  - implementation in goldendomevt: runs as a cron job on a google debian server instance although can run on locally on Windows, Mac, or Linux.
  - limitations: assumes that there is only one playlist per channel so needs to be extended in environments where mutliple playlists are used. 
