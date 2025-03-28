@@ -512,7 +512,8 @@ def video_to_transcript(video_url,title,output_file,delete_temp=True,smart_names
 def add_speaker_names_to_transcript(result,hint_list=None,special_instructions="",silence_limit=None,bucket=None,file=None):
     "uses llm to map speaker numbers to names"
     
-    from pydantic import BaseModel
+    #from pydantic import BaseModel
+    import json
     from openai import OpenAI
     if 'OPENAI_API_KEY' not in os.environ:
         from dotenv import load_dotenv
@@ -555,15 +556,53 @@ def add_speaker_names_to_transcript(result,hint_list=None,special_instructions="
     """
     
     
-    class Speaker(BaseModel):
-        speaker_id: int #id assigned by transcription
-        speaker_name:str #best guess at name. may be null string
-        reason:str #the reason you have assigned the particular name to this spaaker
-        confidence_level:int #value from 1 to 10 indicating confidence iin the neame mapping. 10 is high
-        
-    class SpeakerList(BaseModel):
-        names: list[Speaker]
-        
+    json_schema={"type": "json_schema",
+     "name": "speakers_array",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "speakers": {
+            "type": "array",
+            "description": "An array of speakers.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "speaker_id": {
+                  "type": "number",
+                  "description": "ID assigned by transcription."
+                },
+                "speaker_name": {
+                  "type": "string",
+                  "description": "Best guess at the name. This may be an empty string."
+                },
+                "reason": {
+                  "type": "string",
+                  "description": "The reason you have assigned the particular name to this speaker."
+                },
+                "confidence_level": {
+                  "type": "number",
+                  "description": "Value from 1 to 10 indicating confidence in the name mapping. 10 is high."
+                }
+              },
+              "required": [
+                "speaker_id",
+                "speaker_name",
+                "reason",
+                "confidence_level"
+              ],
+              "additionalProperties": False
+            }
+          }
+        },
+        "required": [
+          "speakers"
+        ],
+        "additionalProperties": False
+      },
+      "strict": True
+    }
+
+
 
     user_prompt=f"""
     {special_instructions}
@@ -579,24 +618,177 @@ def add_speaker_names_to_transcript(result,hint_list=None,special_instructions="
         <end hint>
         """
     try:
-        completion = client.beta.chat.completions.parse(
-        model="gpt-4o",
-        messages=[
+        completion = client.responses.create(
+        model="gpt-4o-2024-08-06",
+        input=[
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_prompt},
         ],
-        response_format=SpeakerList,
+        text={"format":json_schema}
         )
     except Exception as e:
         logger.error(f"ChatGPt call failed: {e}")
         raise
-    logger.info(completion.choices[0].message.parsed.dict()['names'])
+    answer=json.loads(completion.output_text)
+    logger.info(answer)
     
     return(add_speaker_labels_to_transcription_dg(result,
-        speaker_map=completion.choices[0].message.parsed.dict()['names'],silence_limit=silence_limit,
+        speaker_map=answer['speakers'],silence_limit=silence_limit,
         bucket=bucket,file=file))
-     
 
+def make_summary(inbucket,outbucket,meeting,subdirectory="summaries",
+                 url="https://testgoldy.s3.us-east-1.amazonaws.com"):
+    from bototools import pickle_object_from_s3
+    
+    meeting_dir=pickle_object_from_s3(inbucket,meeting+'.pk1')
+    make_summary_data(meeting_dir,outbucket,meeting,subdirectory)
+    
+def make_summary_data(meeting_dir,outbucket,meeting,subdirectory="summaries",
+                 url="https://testgoldy.s3.us-east-1.amazonaws.com"):
+    from bototools import upload_object_to_s3
+    the_summary=make_smart_summary(meeting_dir)
+    summary_title=f"AI Summary of Vermont {meeting_dir['title']}"
+    the_summary=f"<h1>{summary_title}</h1>{the_summary}</br><a href='/{meeting}.html'>Open SmartTranscript of {meeting}</a>"
+    #print(the_summary)
+    #now make a whole page
+    summary_page=f"""
+    <!DOCTYPE html>
+    <html lang=en>
+    <head>
+    <meta charset="UTF-8">
+    <title>{summary_title}</title>
+    <meta name="description" content={summary_title}/>
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="{url}/{subdirectory}/{meeting}.html" />
+    <meta property="og:image" content="https://goldendomevt.com/statehouse.png" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="{summary_title}" />
+    <meta name="twitter:description" content="{summary_title}" />
+    <meta name="twitter:image" content="https://goldendomevt.com/statehouse.png" />
+    <script type="application/ld+json">
+        {{
+      "@context": "https://schema.org",
+      "@type": "Article",
+      "headline": "{summary_title}",
+      "datePublished": "{meeting.split('_')[1]}",      
+      "creator": {{
+        "@type": "Organization",
+        "name": "OpenAI",
+        "alternateName": "ChatGPT-4"
+      }},
+      "isBasedOn": {{
+        "@type": "VideoObject",
+        "name": "{summary_title}",
+        "url": "{meeting_dir['video_url']}",
+        "uploadDate":"{meeting.split('_')[1]}",
+        "thumbnailUrl":"https://img.youtube.com/{get_youtube_id(meeting_dir['video_url'])}/default.jpg"
+      }}
+    }}
+    </script>
+    <script>
+  function loadOptionalScript(url) {{
+  const script = document.createElement('script');
+  script.src = url;
+  script.type = 'text/javascript';
+  script.async = true;
+
+  // Define the onload event handler
+  script.onload = () => {{
+    console.log(`Script loaded successfully: ${url}`);
+    // You can add additional logic here to execute after the script loads
+  }};
+
+  // Define the onerror event handler
+  script.onerror = () => {{
+    console.warn(`Failed to load script: ${url}`);
+    // Handle the error or provide fallback functionality here
+  }};
+
+  // Append the script to the document's head or body
+  document.head.appendChild(script);
+}}
+
+
+loadOptionalScript('https://example.com/optional-script.js');
+</script>
+    </head>
+    <body>
+    <div id="summary-content" style="max-width: 7.5in;">
+    {the_summary}
+    </div>
+    </br></br>
+    <h3>Explanation:</h3>
+    <p>This summary was made using ChatGPT to summarize a transcript of a Vermont legislative session.</p>
+    <p>The transcript itself was made by DeepGram from the offical YouTube video of the session. Speaker IDs were deduced by ChatGPT.</p>
+    <p>Neither the transcript nor the summary have been checked by humans and will contain some errors. However, you can use the link above to open a SmartTranscript of the meeting which will give you access both to the full transcription and the video from which it was made.</p>
+    <p> You can see summaries and SmartTranscripts of all 2025 Vermont legislative meetings at <a href="https://goldendomeVT.com"> GoldenDomeVT.com</a>, a free non-commercial, non-partisan website developed to make the workings of Vermont state government more accessible. No registration is required and no personal data is collected.</p> 
+    </body>
+    </html>
+    """
+    upload_object_to_s3(outbucket,summary_page,subdirectory+'/'+meeting+'.html',ContentType='text/html')
+    print (f"{meeting} uploaded to {outbucket}/{subdirectory}")
+     
+def make_smart_summary(timing_dir,length=200,format="html"):
+    #make a summary (not yet smart) from the timing dictionary which includes transcript of meeting
+    from openai import OpenAI
+    if 'OPENAI_API_KEY' not in os.environ:
+        from dotenv import load_dotenv
+        load_dotenv()
+    try:
+        client=OpenAI()
+    except Exception as e:
+        logger.error(f"Error logging on to OpenAI: {e}")
+        raise
+    bolding_instruction =""
+    if format=='html':
+        
+        bolding_instruction="""
+        use '<strong>...</strong>' for bolding.
+        use <p>...</p> for paragraphs.
+        these are the only html tags to use.
+        do not enclose your output in '<html>....</html>' or '<body>...</body> tags.
+        Do not insert newline characters. Spacing will be done based on <p> tags.
+        """
+    elif format=='md':
+        bolding_instruction= "use '**...**' for bolding."
+        
+    system_prompt=f"""
+        You are a good reader and good at summarization. The user will give you a transcript of a meeting.
+        Your job is to produce a {length} word summary of the meeting a {format} snippet. You do not editorialize in any way.
+        Do not generate a title.
+        Do not repeat the name of the meeting or its date and time in the summary since they will be shown elsewhere.
+        Do not use any subtitles in the summary. It should be at most three paragraphs long.
+        Proper names in the summary should always be bolded as should the names of legislation discussed.
+        {bolding_instruction}
+        Legislation will often be referred to as, for example, S. 345 or H. 98 indicating a bill from the house or the senate
+        or "<something> Act".
+        Just report direct facts from the meeting.
+        Do NOT enclose your answer in back ticks(```).s.
+        Use only simple apostrophes and quotation marks so that they will be rendered properly in all browsers and fonts.
+        DO NOT use curled apostrophes or quotation marks.
+    """
+    user_prompt=f"""
+        The title of the meeting is {timing_dir['title']}.
+        <transcript>
+        {timing_dir['final_text']}
+        <end trancript>
+        """
+    try:
+        completion = client.responses.create(
+        model="gpt-4o-2024-08-06",
+        input=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt},
+        ],
+        )
+    except Exception as e:
+        logger.error(f"ChatGPt call failed: {e}")
+        raise
+    #print (system_prompt)
+    return(completion.output_text)
+        
+    
+    
 def make_smart_transcript_data(text_content,word_times,speaker_list,title, output=None,video=""):
     # Determine the video type based on the file extension
     video_type = ''
@@ -739,7 +931,7 @@ if __name__ == '__main__':
     ENTITIES=['Berlin Selectboard', 'Bethel Selectboard', 'Calais Selectboard', 'East Montpelier Selectboard',
           'Middlesex Selectboard', 'Montpelier City Council', 'Moretown Selectboard', 'Randolph Selectboard', 
           'Rochester Selectboard', 'Waterbury Municipal Meetings']
-    import orca_scraper as sc
+    #import orca_scraper as sc
     #no=NewsOrg(WORKING_DIRECTORY,PUBLIC_DIRECTORY,BASE_URL,
                #['Berlin Selectboard'],storage=r"C:\Users\tevsl\Documents\orcaroot",sc=sc)
    

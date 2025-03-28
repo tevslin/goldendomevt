@@ -37,10 +37,11 @@ def lambda_handler(event, context):
             else:
                 prefix=''
             display_bucket=os.environ.get(prefix+'DISPLAY_BUCKET')
-            transcript_bucket=os.environ.get(prefix+'TRANSCRIPT_BUCKET')  
+            transcript_bucket=os.environ.get(prefix+'TRANSCRIPT_BUCKET')
+            url=os.environ.get(prefix+'DISPLAY_URL')
             if file_key.endswith('.json'):
                 logger.info(f"Processing file: {file_key} in bucket: {bucket_name}")
-                process_request(bucket_name, file_key,transcript_bucket=transcript_bucket,display_bucket=display_bucket)
+                process_request(bucket_name, file_key,transcript_bucket=transcript_bucket,display_bucket=display_bucket,url=url)
             else:
                 logger.info(f"Skipped unsupported file type {file_key}")
         except Exception as e:
@@ -48,10 +49,10 @@ def lambda_handler(event, context):
             logger.error(f"Exception: {e}")
             
 def process_request(bucket_name,file_key,transcript_bucket="testdeepgramtranscript",
-                    display_bucket="testgoldy",weekly_list="weekly.pk1"):
+                    display_bucket="testgoldy",weekly_list="weekly.pk1",url="https://testgoldy.s3.us-east-1.amazonaws.com"):
     #because no values from caller may override
     from bototools import retrieve_from_s3,pickle_object_from_s3,pickle_object_to_s3,upload_object_to_s3
-    from meetingreporter import add_speaker_names_to_transcript,make_smart_transcript_data
+    from meetingreporter import add_speaker_names_to_transcript,make_smart_transcript_data,make_summary_data
     
 
     split=file_key.split(".")
@@ -87,7 +88,7 @@ def process_request(bucket_name,file_key,transcript_bucket="testdeepgramtranscri
     This is a meeting of committee of the Vermont Legislature.
     Each committee has members who serve as Chair, Vice Chair, and usually a Clerk.
     The committee also has an assistant who is often called the legislative counselor
-    and may have other assistants as well. A committe also takes testimoney from witnesses.
+    and may have other assistants as well. A committe also takes testimony from witnesses.
     When assigning names, use the committee role of the person and their full name if you know both from
     context or from the hints which may be provided. For example, Sen. Joe Smith would be Chair Joe Smith
     if he happens to be chair but Member Joe Smith if he is a member of the committee but not Chair,
@@ -108,11 +109,12 @@ def process_request(bucket_name,file_key,transcript_bucket="testdeepgramtranscri
             "speaker_dict":speaker_dict
             }
     pickle_object_to_s3(transcript_bucket,timing_dir,split[0]+'.pk1')
+    make_summary_data(timing_dir,display_bucket,split[0],url=url)
     html=make_smart_transcript_data(final_text,timing_list,speaker_dict,header_data['title'],"",header_data['video'])
     upload_object_to_s3(display_bucket,html,split[0]+'.html',ContentType='text/html')
 if __name__ == '__main__':
-    process_request("proddeepgramaudio","VTSenateEd_2025-02-07_15-39.json",
-                    transcript_bucket="testdeepgramtranscript",display_bucket="testgoldy")
+    process_request("proddeepgramaudio","VTHouseCommEcoDev_2025-03-14_14-30.json",
+                    transcript_bucket="proddeepgramtranscript",display_bucket="goldendomevt.com")
     
     
     
