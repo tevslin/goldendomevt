@@ -6,7 +6,7 @@ will soon contain the code which implements GoldenDomeVT.com and SmartTranscript
 
 This repository is particular to the site GoldenDomeVT.com, which is a factory for creating and serving SmartTranscripts of committee and floor meetings of the Vermont Legislature.SmartTrancripts are text transcripts linked to actual videos in such a way that a user can select text and immediately play the corresponding video clip in an imbedded viewer appropriate to the video type. Much of the code is general and can be used to create SmartTrancripts from a variety of online video sources but some of it uses specific S3 Buckets and URLs whose names are hardcoded as defaults. These need to be replaced with folders or your own s3 buckets to run the code for other sites. It ruins off a list of YouTube channels used by the Vermont Legislature so, at least, needs a different channel list for meetings of other entities and uses a number of other files created from the webpages of the Vermont Legislature.
 ## The Factory
-The factory currently runs partly on a Google debian instance and partly on AWS. Storage for the factory is S3 buckets. The part which runs on Google would run on any Linux system. the only real Linux dependency is the cron job. Absent that the code would run whereever Python is supported. Similarly the code which runs on AWS is dependent for triggering on S3 bucket events but, other than the triggering dependency, can be called in any Python environment.
+The factory currently runs partly on a Google debian instance and partly on AWS. Storage for the factory is S3 buckets. The part which runs on Google would run on any Linux system. The only real Linux dependency is the cron job. Absent that, the code would run whereever Python is supported. Similarly the code which runs on AWS is dependent for triggering on S3 bucket events but, other than the triggering dependency, can be called in any Python environment.
 
 ![The Factory](/assets/factory.png)
 
@@ -28,6 +28,7 @@ The factory currently runs partly on a Google debian instance and partly on AWS.
  - invokes ChatGPT to deduce actual speaker names from context and hint files
  - uploads transcript and metadata to designated bucket
  - formats final transcript as SmartTranscrpt HTML and puts in public S3 bucket
+ - calls ChatGPT to create summary of transcript and puts that in public S3 bucket as well
 - implementation in goldendoemvt:
  - the code contains a wrapper so it can be invoked as an AWS lambda function triggred by the arrival of a JSON file in a specified bucket
  - the interface to ChatGPT and the formatting of the HTML file are separated from the lambda function wrapper so that the code can also be used in other contexts
@@ -41,6 +42,7 @@ The factory currently runs partly on a Google debian instance and partly on AWS.
 -functions (as used in jsontohtml):
  - parse JSON returned by DeepGram and create draft transcript with embedded speaker IDs
  - call ChatGPT to deduce actual speaker name
+ - call ChatGPT to create summary HTML
  - create SmartTranscript HTML
 -other functions: contains a medly of routines not used in the production factory such as non-AWS dependent calls to Deepgram and AssemblyAI, downloads for video formats other than youtube, and other rouines (some deprecated) you may find useful
 -implementation in goldendomevt: packaged with jsontohtml lambda function for purposes above
