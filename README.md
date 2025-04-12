@@ -64,7 +64,7 @@ The factory currently runs partly on a Google debian instance and partly on AWS.
   - only handles
   - needs requisite permissions when operating on AWS
 -dependencies:
-  - DeepGram API key assumed to be available as os.environ.get('DEEPGRAM_API_KEY'). Made available on AWS as part of thr lambda function setup
+  - DeepGram API key assumed to be available as os.environ.get('DEEPGRAM_API_KEY'). Supplied to AWS in my.env as part of building the lambda function.
   - boto3
   - botocore.exceptions
   - deepgram
