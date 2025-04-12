@@ -1,0 +1,16 @@
+{
+  "lambda_name": "json2html",
+  "entry_file": "jsontohtml.py",
+  "entry_func": "lambda_handler",
+  "mylib_files": ["jsontohtml.py","meetingreporter.py","bototools.py"],
+  "output_dir": ".",
+  "memory_size": 128,
+  "python_version":"3.12",
+  "timeout": 120,
+  "ephemeral_storage": 512,
+  "role_name": "s3lambda",
+  "s3_buckets": ["*"],
+  "trigger_bucket": "<your bucket where deepgram deposits transcript json>",
+  "trigger_filetypes":["json"],
+  "use_docker":true
+}
