@@ -101,7 +101,7 @@ The factory currently runs partly on a Google debian instance and partly on AWS.
 1. **committees.pk1**
 - pickle of a dictionary where the keys are committee handles and the values are the YouTube IDs of the channels which correspond to the committee. Input to youtubetos3.py. These were scraped from the Vermont legislative directory. Use for other jurisdictions obviously requires building your own dictionary in the same format.
 2. **weekly.pk1**
-- pickle of an optional dictionary used as context for ChatGPT when assigning names to speakers in a trancript. GoldenDome specific and scraped from Vermont Legislature website but format could be used by other implementations, Major key is committee name. Dictionary under that has key "assistants", whose value is a list of committee assisatnts and their titles, and "speakers" which is list of subdictionaries. Each of these subdictionaries has a key "date", whose value is a date in the form YYYY-MM-DD, and a key "speakers", whose value is a list of speaker names and titles.
+- pickle of an optional dictionary used as context for ChatGPT called from json2html lambda function when assigning names to speakers in a trancript. GoldenDome specific and scraped from Vermont Legislature website but format could be used by other implementations, Major key is committee name. Dictionary under that has key "assistants", whose value is a list of committee assisatnts and their titles, and "speakers" which is list of subdictionaries. Each of these subdictionaries has a key "date", whose value is a date in the form YYYY-MM-DD, and a key "speakers", whose value is a list of speaker names and titles.
 
 
 
