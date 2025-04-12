@@ -1,0 +1,11 @@
+Robin Scheu,Chair,Democrat,Addison-1,RScheu@leg.state.vt.us
+James Harrison,Vice Chair,Republican,Rutland-11,jharrison@leg.state.vt.us
+Tiffany Bluemle,Ranking Member,Democrat,Chittenden-13,tbluemle@leg.state.vt.us
+Eileen Dickinson,Member,Republican,Franklin-2,edickinson@leg.state.vt.us
+John Kascenska,Member,Republican,Essex-Caledonia,jkascenska@leg.state.vt.us
+Wayne Laroche,Member,Republican,Franklin-5,wlaroche@leg.state.vt.us
+Michael Mrowicki,Member,Democrat,Windham-4,mmrowicki@leg.state.vt.us
+Michael Nigro,Member,Democrat,Bennington-5,mnigro@leg.state.vt.us
+Trevor Squirrell,Clerk,Democrat,Chittenden-3,TSquirrell@leg.state.vt.us
+Thomas Stevens,Member,Democrat,Washington-Chittenden,tstevens@leg.state.vt.us
+David Yacovone,Member,Democrat,Lamoille-Washington,DYacovone@leg.state.vt.us
