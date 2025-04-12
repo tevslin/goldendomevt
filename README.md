@@ -31,7 +31,7 @@ The factory currently runs partly on a Google debian instance and partly on AWS.
 -dependencies:
  - bototools
  - meetingreporter
- - <committeename>.txt (optional)
+ - \<committeename>.txt (optional)
  - weekly.pk1 (optional)
 
 3. **meetingreporter.py**
@@ -68,7 +68,7 @@ The factory currently runs partly on a Google debian instance and partly on AWS.
   - boto3
   - botocore.exceptions
   - deepgram
-  - 
+   
 6. **youtubeapi.py**
 - function: interface to googleapiclent routines for YouTube information access
 - implementation in goldendomevt:
