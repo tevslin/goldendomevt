@@ -9,6 +9,6 @@
   "ephemeral_storage": 512,
   "role_name": "s3lambda",
   "s3_buckets": ["*"],
-  "trigger_bucket": "testdeepgramaudio",
+  "trigger_bucket": "<your s3 bucket for deepgram interaction>",
   "trigger_filetypes":["webm","m4a","mp4","wav"]
 }
