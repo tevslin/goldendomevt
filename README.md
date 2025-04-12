@@ -43,7 +43,7 @@ The factory currently runs partly on a Google debian instance and partly on AWS.
 -other functions: contains a medly of routines not used in the production factory such as non-AWS dependent calls to Deepgram and AssemblyAI, downloads for video formats other than youtube, and other rouines (some deprecated) you may find useful
 -implementation in goldendomevt: packaged with jsontohtml lambda function for purposes above
 -dependencies:
- - OpenAI API key assumed to be available as os.environ.get('DEEPGRAM_API_KEY') or .env. Made available on AWS as part of thr lambda function setup
+ - OpenAI API key assumed to be available as os.environ.get('DEEPGRAM_API_KEY') or .env.
  - pydantic (must be the right version for the execution platform)
  - openai
 
@@ -61,7 +61,7 @@ The factory currently runs partly on a Google debian instance and partly on AWS.
  - the interface to DG is separated from the lambda function wrapper so that the code can also be used in other contexts
 - limitations:
   - the interface to DeepGram is specific to S3 buckets.
-  - only handles
+  - only handles .wav,.mp4,.webm, and .m4a file types
   - needs requisite permissions when operating on AWS
 -dependencies:
   - DeepGram API key assumed to be available as os.environ.get('DEEPGRAM_API_KEY'). Supplied to AWS in my.env as part of building the lambda function.
