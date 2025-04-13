@@ -1,0 +1,130 @@
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        nav ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            background-color: #f8f8f8;
+        }
+
+        nav ul li {
+            position: relative;
+            padding: 10px 20px;
+            cursor: pointer;
+        }
+
+        nav ul li a {
+            text-decoration: none;
+            color: #333;
+        }
+
+        nav ul li:hover a {
+            color: #007bff;
+        }
+
+        .dropdown-menu {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: #fff;
+            border: 1px solid #ddd;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            list-style: none;
+            padding: 7px 0;
+            min-width: 150px;
+        }
+
+        .dropdown-menu li {
+            padding: 8px 20px;
+        }
+
+        .dropdown-menu li span {
+			white-space: nowrap;
+            color: #333;
+            text-decoration: none;
+            display: block;
+            width: 100%;
+        }
+
+        .dropdown-menu li span:hover {
+            background-color: #007bff;
+            color: #fff;
+        }
+
+        .menu-item:hover > .dropdown-menu {
+            display: block;
+        }
+
+        .menu-item .menu-item:hover > .dropdown-menu {
+            display: block;
+            left: 100%;
+            top: 0;
+        }
+		
+		.disabled {
+			color: #d3d3d3 !important; /* Light grey */
+			pointer-events: none; /* Prevents clicks */
+			cursor: not-allowed; /* Changes the cursor to indicate it is unselectable */
+		}
+		
+		#committeeModal button {
+			margin: 10px;
+			padding: 10px 20px;
+			border: none;
+			background-color: #007bff;
+			color: white;
+			cursor: pointer;
+			border-radius: 4px;
+		}
+		
+		#committeeModal button:hover {
+			background-color: #0056b3;
+		}
+		.home-button {
+		  display: inline-flex;
+		  align-items: center;
+		  padding: 4px 6px;
+		  background-color: #eee;
+		  border: 1px solid #ccc;
+		  border-radius: 4px;
+		  cursor: pointer;
+		  font-size: 12px;
+		  text-decoration: none; /* For anchor */
+		  color: #000; /* Text color */
+		  gap: 4px; /* Space between icon and text */
+		}
+
+		.home-button:hover {
+		  background-color: #ddd;
+		}
+
+		.home-button img,
+		.home-button svg {
+		  width: 16px;
+		  height: 16px;
+		}
+
+		button.home-button {
+		  border: 1px solid #ccc;
+		  background-color: #eee;
+		  padding: 4px 6px;
+		  font-size: 12px;
+		  cursor: pointer;
+		}
+
+		button.home-button:focus {
+		  outline: none; /* Remove default focus ring */
+		  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.2); /* Add custom focus effect */
+		}
+
+		button.home-button:hover {
+		  background-color: #ddd;
+		}
+
