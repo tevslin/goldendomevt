@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SmartTranscripts and Summaries of Meetings Under The Vermont Golden Dome</title>
+	<script src="https://sdk.amazonaws.com/js/aws-sdk-2.1416.0.min.js"></script>
+	<script>
+ function modifySearchLinks() {
+    // Get the search query from the rendered search input.
+    var inputElem = document.querySelector('input.gsc-input');
+    if (!inputElem) {
+        console.error("Search input not found.");
+        return;
+    }
+    var searchQuery = inputElem.value;
+
+    // Select all result links and corresponding snippets.
+    var results = document.querySelectorAll('.gsc-webResult');
+
+    results.forEach(function(result) {
+        // Get the link element.
+        var link = result.querySelector('.gs-title a');
+        if (!link) return;
+
+        // Remove any inline onclick attribute (if present).
+        link.removeAttribute("onclick");
+
+        // Clone the link to remove all event listeners that Google attached.
+        var newLink = link.cloneNode(true);
+        var originalUrl = newLink.getAttribute("href");
+
+        // Extract the snippet text (if available) and clean it.
+        var snippetElem = result.querySelector('.gs-snippet');
+        var snippetText = snippetElem ? snippetElem.innerHTML.replace(/<[^>]+>/g, '') : "";
+        
+        // Extract relevant snippet portion.
+		snippetText = snippetText
+		  .trim()
+		  .replace(/^.*?\.\.\.\s*(?:\.\.\.\s*)?/, '')
+		  .replace(/\.\.\..*/, '')
+		  .replace(/(\.\.\.\s*)+$/, '')
+		  .replace(/(&nbsp;\s*)+$/, '')
+		  .trim();
+
+        if (originalUrl) {
+            // Determine the correct separator (if there are already parameters, use '&').
+            var separator = originalUrl.indexOf('?') > -1 ? '&' : '?';
+            var modifiedUrl = originalUrl + separator + 'q=' + encodeURIComponent(searchQuery);
+            
+            if (snippetText) {
+                modifiedUrl += '&s=' + encodeURIComponent(snippetText);
+            }
+            
+            newLink.setAttribute("href", modifiedUrl);
+
+            // Attach our own click listener to override Google’s handling.
+            newLink.addEventListener("click", function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                // Navigate using our modified URL.
+                window.open(modifiedUrl, '_blank');
+            }, true);
+        }
+
+        // Replace the old link with the new one.
+        link.parentNode.replaceChild(newLink, link);
+    });
+}
+
+
+      // Configure __gcse to use our search callback.
+      window.__gcse = {
+        parsetags: 'onload',
+        searchCallbacks: {
+          web: {
+            rendered: modifySearchLinks
+          }
+        }
+      };
+	  
+	  function loadSummary(transcriptKey, transcriptUrl) {
+    // Summaries are at "/summaries/<originalFilename>"
+ 
+		const summaryUrl = '/summaries/' + transcriptKey;
+
+	fetch(summaryUrl)
+	  .then(response => {
+		if (!response.ok) {
+		  // If not OK, display the "not found" message
+		  document.getElementById('summary-container').innerHTML =
+			'<br><br>No summary was found for ' + transcriptKey;
+		  // Return null to prevent further processing
+		  return null;
+		}
+		// Return the response text
+		return response.text();
+	  })
+	  .then(summaryHtml => {
+		// If summaryHtml is null, we've already displayed "No summary..."
+		if (summaryHtml) {
+		  // Parse the fetched HTML
+		  const parser = new DOMParser();
+		  const doc = parser.parseFromString(summaryHtml, 'text/html');
+		  // Extract the content of the div with id 'summary-content'
+		  const summaryContent = doc.getElementById('summary-content');
+		  if (summaryContent) {
+		    summaryContent.querySelectorAll('a').forEach(link => {
+				link.setAttribute('target', '_blank');
+			});
+			// Store the last summary key
+			localStorage.setItem('lastSummaryKey', transcriptKey);
+			// Insert the content into the 'summary-container'
+			document.getElementById('summary-container').innerHTML = summaryContent.innerHTML;
+		  } else {
+			// Handle the case where 'summary_content' div is not found
+			document.getElementById('summary-container').innerHTML =
+			  '<br><br>No summary content found for ' + transcriptKey;
+		  }
+		}
+	  })
+	  .catch(() => {
+		// Handle network errors
+		document.getElementById('summary-container').innerHTML =
+		  '<br><br>No summary was found for ' + transcriptKey;
+	  });
+	}
+    </script>
+    <style>
+		h1, h2 {
+			margin: 0;
+		  }
+		  /* Optionally, add a small gap between the two headings */
+		  h1 + h2 {
+			margin-top: 0.5em;
+		}
+        body {
+            background-image: url('statehouse.png');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            position: relative;
+            font-family: Arial, Helvetica, sans-serif; /* Modern, commonly available fonts */
+        }
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.8); /* White overlay to make the image much fainter */
+            pointer-events: none;
+            z-index: -1;
+        }
+        .content {
+            position: relative;
+            z-index: 1;
+        }
+        .folder {
+            cursor: pointer;
+			display: block;
+            margin: 5px 0;
+            list-style: none;
+            /*display: flex;*/
+        }
+		.folder img,
+		.folder span {
+		  display: inline-block;
+		  vertical-align: middle;
+		}
+        .folder.level-1 span {
+            font-weight: bold !important;
+            font-size: 16px !important;
+        }
+        .folder.level-2 span {
+            font-weight: normal !important;
+            font-size: 16px !important;
+        }
+        .folder.level-3 span {
+            font-weight: normal !important;
+            font-size: 14px !important;
+        }
+		
+        .nested {
+            display: none;
+
+        }
+        .active {
+            display: block;
+        }
+		.footer1 {
+			font-size: 20px;
+		}
+		.footer3 {
+			font-size: 14px;
+			display:flex;
+			color:green;
+			justify-content: center; /* Centers content horizontally */
+		}
+        .nested li a {
+            font-size: 12px !important;
+            font-weight: normal !important;
+			text-decoration: underline !important; /* Ensure links are underlined */
+            text-decoration: none;
+        }
+		/*
+		ul {
+		  margin: 0;
+		  padding: 0;
+		}
+		ul li {
+		  list-style: none; 
+		  margin: 0;
+		  padding: 0;
+		}
+		*/
+		
+		/* A flex container that stacks header on top, content below */
+		#page-container {
+		  display: flex;
+		  flex-direction: column;
+		  height: 100vh; /* Viewport height for full-page layout */
+		}
+
+
+		/* STICKY Header --- */
+		#header-container {
+		  position: sticky;  /* pinned to top while scrolling within #page-container */
+		  top: 0;
+		  z-index: 999;
+		  background: white;
+		  flex: 0 0 auto;    /* do not shrink or grow */
+		  padding-bottom: 1em; /* style as you wish */
+		}
+
+
+		/* For the main area that holds the two scrollable panes side by side */
+		#main-container {
+		  flex: 1 1 auto;   /* fill the rest of the page-container below the header */
+		  display: flex;    /* place left and right panes horizontally side by side */
+		  flex-wrap: nowrap;
+		  overflow: hidden; /* so each pane can scroll individually */
+		}
+
+		/* Left pane: min 5.00” wide, scrolls only within itself */
+		#left-pane {
+		  flex: 0 0 5.0in;
+		  overflow-y: auto;
+		  padding-right: 1em;
+		}
+
+		/* Right pane: max 7.5” wide, scrolls only within itself, 
+		   but still grows/shrinks if there's room */
+		#right-pane {
+		  flex: 1 1 auto;
+		  max-width: 7.5in;
+		  overflow-y: auto;
+		  padding: 1em;
+		}
+		#right-pane h1 {
+		  text-align: center;
+		}
+
+		#right-pane p {
+		  text-align: left;
+		  text-indent: 0; /* Remove any default paragraph indent */
+		  margin: 0 0 1em 0; /* Optional: control spacing between paragraphs */
+		  padding: 0;
+		}
+		
+		.transcript-link-item .open-smarttranscript-link {
+			display: none;
+			/* text-decoration: underline;  ensure it's visibly an underlined link */
+			cursor: pointer;           /* typical link pointer */
+		}
+
+		/* Show the link when hovering over the entire list item */ 
+		
+		.transcript-link-item:hover .open-smarttranscript-link,
+		.transcript-link-item.selected .open-smarttranscript-link{
+		  display: inline-block;
+		}
+		
+		.transcript-link-item.selected {
+			background-color: #f0f0f0;
+			border-left: 6px solid #666; /* you can adjust width/color as needed */
+		}
+		
+		/* 1em space to the left of the link */
+		.open-smarttranscript-link {
+		  margin-left: 1em;
+		}
+
+		/* Center h3 headings within the left pane */
+		#left-pane h3 {
+		  text-align: center;
+		}
+
+    </style>
+
+</head>
+<body>
+<div id="page-container">
+    <div id="header-container">
+		<h1>SmartTranscripts and Summaries of Meetings Under the Vermont Golden Dome</h1>
+
+
+		<div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+
+		<div style="line-height:1.5; min-width: 600px;margin-left:auto;">
+		<script async src="https://cse.google.com/cse.js?cx=13a4b6baab1f24bbc"></script>
+		<div class="gcse-search"></div>
+
+		<script>
+		  function customizeSearchBox() {
+			var inputField = document.querySelector('input.gsc-input');
+
+			if (inputField) {
+			  inputField.setAttribute("placeholder", "SmartSearch for people or keywords..."); // Set custom placeholder
+			  inputField.style.background = "none"; // Remove Google branding background
+			} else {
+			  setTimeout(customizeSearchBox, 500); // Retry if not found
+			}
+		  }
+
+		  // Wait for the search box to be loaded by Google
+		  window.addEventListener("load", () => {
+			setTimeout(customizeSearchBox, 500); // Delay to ensure elements are present
+		  });
+		</script>
+
+		<style>
+		  input.gsc-input {
+			background: none !important;
+		  }
+		</style>
+
+	
+		</div>
+		</div>
+	</div>
+	<div id="main-container">
+	  <div id="left-pane">
+	  <h3>Meetings</h3>
+      <ul id="file-list"></ul>
+	  </div>
+	<div id="right-pane">
+        <div id="summary-container" style="text-align: center;">
+            </br></br><b>Select a meeting to see summary.</b>
+        </div>
+     
+    </div>
+	</div>
+
+    <div id="footer" class="footer3"></div>
+	<div id="newfeature" style="display: none;">newfeature</div>
+</div>
+
+<script>
+	let currentlySelectedItem = null;
+
+	function selectItem(fileItem, key, transcriptUrl) {
+		// Deselect any previously selected item:
+		if (currentlySelectedItem && currentlySelectedItem !== fileItem) {
+		   currentlySelectedItem.classList.remove('selected');
+		}
+		// Mark this one as selected:
+		fileItem.classList.add('selected');
+		currentlySelectedItem = fileItem;
+	   // Load the summary:
+		loadSummary(key, transcriptUrl);
+	   // Store lastSummaryKey in localStorage for autoRefresh restore:
+		localStorage.setItem('lastSummaryKey', key);
+	}
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const hostname = window.location.origin;
+		let bucketName;
+		const parsedHostname = new URL(hostname).hostname;
+		let url;
+		if (parsedHostname.includes('amazonaws.com')){
+			const parts=parsedHostname.split('.');
+			bucketName=parts[0];
+			url = new URL(`https://${bucketName}.s3.amazonaws.com`);
+		} else {
+			bucketName=parsedHostname.replace('www.','');
+			url = new URL('https://s3.us-east-1.amazonaws.com/goldendomevt.com/');;
+		}
+        //const bucketName = 'goldendomevt.com';
+        //const bucketUrlx = `http://${bucketName}.s3.amazonaws.com`;
+		console.log(bucketName);
+		const bucketUrl=hostname;
+		region='us-east-1'
+		AWS.config.update({
+            region: region 
+        });
+        const s3 = new AWS.S3({
+            apiVersion: '2006-03-01'
+        });
+		//const params = {
+			//Bucket: bucketName,
+			//MaxKeys: 10000 // Adjust as needed
+		//};
+		async function getS3Objects(url) {
+			const allKeys = [];
+			let continuationToken = '';
+			const maxKeys = 1000;
+
+			while (true) {
+				// Create a new URL instance for each request to prevent duplicate query params
+				let requestUrl = new URL(url.toString());
+				requestUrl.searchParams.set('list-type', '2');
+				requestUrl.searchParams.set('max-keys', maxKeys);
+				requestUrl.searchParams.set('delimiter', '/'); // Ensures only root-level objects are returned
+				
+				if (continuationToken) {
+					requestUrl.searchParams.set('continuation-token', continuationToken);
+				}
+
+				try {
+					const response = await fetch(requestUrl.toString());
+					if (!response.ok) {
+						throw new Error(`HTTP error! Status: ${response.status}`);
+					}
+
+					const text = await response.text();
+					const parser = new DOMParser();
+					const xmlDoc = parser.parseFromString(text, 'application/xml');
+
+					// Extract object keys
+					const contents = xmlDoc.getElementsByTagName('Contents');
+					for (let i = 0; i < contents.length; i++) {
+						const key = contents[i].getElementsByTagName('Key')[0].textContent;
+						if (!key.includes('/')) { // Exclude subdirectories
+							allKeys.push(key);
+						} else {
+							console.log(key+' dropped');
+						}
+					}
+
+					// Check if there are more objects to fetch
+					const isTruncated = xmlDoc.getElementsByTagName('IsTruncated')[0].textContent === 'true';
+					const nextTokenElement = xmlDoc.getElementsByTagName('NextContinuationToken')[0];
+
+					// If not truncated OR no valid continuation token, exit loop
+					if (!isTruncated || !nextTokenElement) {
+						break;
+					}
+
+					// Set the continuation token for the next iteration
+					continuationToken = nextTokenElement.textContent;
+				} catch (error) {
+					console.error('Error fetching S3 objects:', error);
+					break;
+				}
+			}
+
+			return allKeys;
+		}
+
+
+		
+		const folderStateName='folderStateV3';
+
+        getS3Objects(url)
+                    //console.error('Error fetching bucket contents:', err);
+                //} else {
+				.then(keys=>{
+					var folderState = JSON.parse(localStorage.getItem(folderStateName)) || null;
+					const fileList = document.getElementById('file-list');
+					const filesByYear = {};
+					//data.Contents.forEach(item => {
+					keys.forEach(key=>{
+						//const key=item.Key;
+						const regex = /^VT(House|Senate)(\w+)_\d{4}-\d{2}-\d{2}_\d{2}-\d{2}\.html$/;
+						const match = key.match(regex);
+
+						if (match) {
+							const chamber = match[1];
+							const committee = match[2];
+							const year = key.split('_')[1].split('-')[0];
+
+							if (!filesByYear[year]) {
+								filesByYear[year] = { Senate: {}, House: {} };
+							}
+							if (!filesByYear[year][chamber][committee]) {
+								filesByYear[year][chamber][committee] = [];
+							}
+							filesByYear[year][chamber][committee].push(key);
+							filesByYear[year][chamber][committee].sort((a, b) => b.localeCompare(a));
+						}
+					});
+      
+
+					// Set up folder hierarchy
+					const sortedYears = Object.keys(filesByYear).sort((a, b) => b.localeCompare(a));
+	
+					if (folderState===null) { //if nothing saved
+						folderState={[sortedYears[0]]:true,[sortedYears[0]+"/Senate"]:true,[sortedYears[0]+"/House"]:true}; //use defaults
+						localStorage.setItem(folderStateName, JSON.stringify(folderState)); //and save them as current state
+					}
+					for(const mostRecentYear of sortedYears) {
+						//const mostRecentYear = sortedYears[0];
+						
+						const yearItem = createFolderItem(mostRecentYear, folderState[mostRecentYear]||false, 1);
+						fileList.appendChild(yearItem);
+							
+						const senateItem = createFolderItem('Senate', folderState[mostRecentYear+'/Senate']||false, 2);
+						const houseItem = createFolderItem('House', folderState[mostRecentYear+'/House']||false, 2);
+
+						yearItem.querySelector('.nested').appendChild(senateItem);
+						yearItem.querySelector('.nested').appendChild(houseItem);
+
+						for (const committee in filesByYear[mostRecentYear].Senate) {
+							const committeeItem = createFolderItem(committee, folderState[mostRecentYear+'/Senate/'+committee]||false, 3);
+							//const committeeItem = createFolderItem(committee, committee === Object.keys(filesByYear[mostRecentYear].Senate)[0], 3);
+							senateItem.querySelector('.nested').appendChild(committeeItem);
+							filesByYear[mostRecentYear].Senate[committee].forEach(file => {
+								const fileLink = createFileLink(file, bucketUrl);
+								committeeItem.querySelector('.nested').appendChild(fileLink);
+							});
+						}
+
+						for (const committee in filesByYear[mostRecentYear].House) {
+							const committeeItem = createFolderItem(committee, folderState[mostRecentYear+'/House/'+committee]||false, 3);
+							//const committeeItem = createFolderItem(committee, committee === Object.keys(filesByYear[mostRecentYear].House)[0], 3);
+							houseItem.querySelector('.nested').appendChild(committeeItem);
+
+							filesByYear[mostRecentYear].House[committee].forEach(file => {
+								const fileLink = createFileLink(file, bucketUrl);
+								committeeItem.querySelector('.nested').appendChild(fileLink);
+							});
+						}
+					}
+					checkForSummary();
+				})
+				.catch(err=>{
+					console.error('Error fetching bucket contents:', err);
+				});
+					
+        //});
+
+        function createFolderItem(name, initiallyOpen = false, level = 1) {
+            const item = document.createElement('li');
+            item.classList.add('folder', `level-${level}`);
+
+            // Create the icon element
+            const icon = document.createElement('img');
+            icon.src = initiallyOpen ? 'dome_open.png' : 'dome_closed.png';
+            icon.style.width = '24px'; // Explicitly set width and height
+            icon.style.height = '24px';
+            icon.style.marginRight = '10px';
+
+            // Create the text element
+            const text = document.createElement('span');
+            text.textContent = name;
+
+            // Append icon and text to the list item
+            item.appendChild(icon);
+            item.appendChild(text);
+
+            const nestedList = document.createElement('ul');
+            nestedList.classList.add('nested');
+            item.appendChild(nestedList);
+
+            if (initiallyOpen) {
+                nestedList.classList.add('active');
+                item.classList.add('open');
+            }
+			
+			function getFolderPath(folderItem) {
+				const path = [];
+				let current = folderItem;
+
+				while (current && current.tagName === 'LI') {
+					const text = current.querySelector('span')?.textContent || '';
+					path.unshift(text.trim());
+					console.log(`Processing folder: ${text.trim()}, Current Path: ${path.join('/')}`);
+					current = current.closest('ul')?.closest('li'); // Safely move up the hierarchy
+				}
+
+				console.log(`Final Path for Folder: ${path.join('/')}`);
+				return path.join('/');
+			}
+
+
+            item.addEventListener('click', (event) => {
+                if (event.target.tagName !== 'SPAN' && event.target.tagName !== 'IMG') {
+                    // Only toggle the folder if clicking on the folder name or icon
+                    return;
+                }
+                if (event.target.tagName === 'A' || event.type === 'selectstart') {
+                    // Prevent the folder from toggling if a link is clicked or text is drag-selected
+                    return;
+                }
+                if (event.target.tagName === 'A') {
+                    // Prevent the folder from toggling if a link is clicked
+                    return;
+                }
+                event.stopPropagation();
+                nestedList.classList.toggle('active');
+                item.classList.toggle('open');
+
+                // Toggle icon between open and closed
+                if (item.classList.contains('open')) {
+                    icon.src = 'dome_open.png';
+                } else {
+                    icon.src = 'dome_closed.png';
+                }
+
+                // Store state in localStorage
+                const folderState = JSON.parse(localStorage.getItem(folderStateName)) || {};
+                folderState[getFolderPath(item)] = item.classList.contains('open');
+                localStorage.setItem(folderStateName, JSON.stringify(folderState));
+            });
+
+            return item;
+        }
+
+
+		function createFileLink(key, bucketUrl) {
+			const fileItem = document.createElement('li');
+			fileItem.classList.add('transcript-link-item');
+
+			// Build a span with the same date text (not a link).
+			const textSpan = document.createElement('span');
+
+			const dateRegex = /_(\d{4})-(\d{2})-(\d{2})_(\d{2})-(\d{2})/;
+			const match = key.match(dateRegex);
+			if (match) {
+				const year = match[1];
+				const month = parseInt(match[2], 10) - 1;
+				const day = match[3];
+				let hour = parseInt(match[4], 10);
+				const minute = match[5];
+				const ampm = hour >= 12 ? 'PM' : 'AM';
+				hour = hour % 12 || 12;
+				const date = new Date(year, month, day);
+				const options = { month: 'long', day: 'numeric', year: 'numeric' };
+				const formattedDate = date.toLocaleDateString(undefined, options);
+				textSpan.textContent = `${formattedDate} ${hour}:${minute}${ampm}`;
+			} else {
+				textSpan.textContent = key;
+			}
+
+			fileItem.appendChild(textSpan);
+
+			// Clicking the text itself selects the item and loads the summary.
+			textSpan.addEventListener('click', function(e) {
+				e.preventDefault();
+				e.stopPropagation();
+				const transcriptUrl = new URL(key, bucketUrl).toString();
+				selectItem(fileItem, key, transcriptUrl);
+			});
+
+		// Real anchor with an actual href for "Open SmartTranscript"
+		const transcriptUrl = new URL(key, bucketUrl).toString();
+		const openLink = document.createElement('a');
+		openLink.href = transcriptUrl;
+		openLink.target = '_blank';
+		openLink.textContent = 'Open SmartTranscript';
+		openLink.classList.add('open-smarttranscript-link');
+
+		// Intercept the click so you can select the item and open the transcript
+		openLink.addEventListener('click', function(e) {
+			e.preventDefault();
+			e.stopPropagation();
+			if (!fileItem.classList.contains('selected')) {
+				selectItem(fileItem, key, transcriptUrl);
+			}
+			window.open(transcriptUrl, '_blank');
+		});
+		fileItem.appendChild(openLink);
+		// ✅ **Check localStorage conditions before selecting**
+		const autoRefreshInProgress = localStorage.getItem("autoRefreshInProgress") === "true";
+		const lastSummaryKey = localStorage.getItem("lastSummaryKey");
+
+		if (autoRefreshInProgress && lastSummaryKey && key.includes(lastSummaryKey)) {
+			fileItem.classList.add('selected');
+			currentlySelectedItem=fileItem;
+		}
+		return fileItem;
+	}
+	
+	function checkForSummary() {
+		if (localStorage.getItem('autoRefreshInProgress') === 'true') {
+			// Clear that flag so manual refresh doesn't also restore summary
+			localStorage.removeItem('autoRefreshInProgress');
+
+			// If we have a last loaded summary, re-fetch it
+			const lastSummaryKey = localStorage.getItem('lastSummaryKey');
+			if (lastSummaryKey) {
+			  // We don't have the original transcriptUrl handy,
+			  // but can easily reconstruct or store it. For now, let's guess:
+			  const transcriptUrl = new URL(lastSummaryKey, window.location.origin).toString();
+			  loadSummary(lastSummaryKey, transcriptUrl);
+			  
+			}
+		}
+	}
+    });
+</script>
+<script src="footer_loader_script.js"></script>
+
+
+<script>
+	(function () {
+	  window.pageLoadTime = Date.now();
+	  console.log("Script executed at: " + new Date(window.pageLoadTime).toLocaleString());
+	  // Time constants in milliseconds
+	  const REFRESH_INTERVAL = 30 * 60 * 1000; // 30 minutes
+	  const INACTIVITY_DELAY = 30 * 1000;        // 30 seconds
+
+	  let inactivityTimer = null;
+	  let refreshTimer = null;
+
+	  // Function to start the refresh timer
+	  function startRefreshTimer() {
+		// Clear any previous timer (if any)
+		if (refreshTimer) clearTimeout(refreshTimer);
+		
+		// Set a timer for the refresh interval
+		refreshTimer = setTimeout(() => {
+		  // Once the refresh interval has passed, begin monitoring for inactivity.
+		  startInactivityMonitor();
+		}, REFRESH_INTERVAL);
+	  }
+
+	  // Function to start monitoring for 30 seconds of inactivity
+	  function startInactivityMonitor() {
+		// Start the initial inactivity timeout
+		resetInactivityTimer();
+
+		// Add event listeners for various types of user activity
+		['mousemove', 'keydown', 'mousedown', 'touchstart'].forEach((event) => {
+		  document.addEventListener(event, resetInactivityTimer);
+		});
+	  }
+
+	  // Function to reset the inactivity timer
+	  function resetInactivityTimer() {
+		// If there is an existing inactivity timer, clear it
+		if (inactivityTimer) clearTimeout(inactivityTimer);
+
+		// Start a new inactivity timer; if no activity for 30 seconds, refresh the page.
+		inactivityTimer = setTimeout(() => {
+		  // Refresh the page. This reload resets everything except summariesincluding our timers.
+		  localStorage.setItem('autoRefreshInProgress', 'true');
+		  location.reload();
+		}, INACTIVITY_DELAY);
+	  }
+
+	  // Start the cycle when the script loads
+	  startRefreshTimer();
+
+	  // Clear timers when the page is about to unload
+	  window.addEventListener('beforeunload', () => {
+		clearTimeout(refreshTimer);
+		clearTimeout(inactivityTimer);
+	  });
+	})();
+</script>
+
+</body>
+</html>

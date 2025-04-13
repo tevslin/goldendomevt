@@ -1,0 +1,384 @@
+<div id="footer-content">
+    <button id="aboutButton">About</button>
+    <button id="shareButton">Share</button>
+    <a href="mailto:contact@goldendomevt.com">Contact Us</a>
+</div>
+
+<script>
+    // Helper to create a modal overlay
+    function createModalOverlay() {
+        const overlay = document.createElement('div');
+        overlay.style.position = 'fixed';
+        overlay.style.top = '0';
+        overlay.style.left = '0';
+        overlay.style.width = '100%';
+        overlay.style.height = '100%';
+        overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+        overlay.style.zIndex = '999';
+        overlay.addEventListener('click', (e) => e.stopPropagation()); // Prevent clicks on overlay
+        return overlay;
+    }
+
+    // About Button Modal Dialog
+    function showAboutDialog(page='About',autoShow = false) {
+        const overlay = createModalOverlay();
+        document.body.appendChild(overlay);
+
+        const modal = document.createElement('div');
+        modal.style.position = 'fixed';
+        modal.style.top = '50%';
+        modal.style.left = '50%';
+        modal.style.transform = 'translate(-50%, -50%)';
+        modal.style.backgroundColor = '#fff';
+        modal.style.padding = '20px';
+        modal.style.boxShadow = '0 0 10px rgba(0, 0, 0, 0.5)';
+        modal.style.zIndex = '1000';
+
+        const content = document.createElement('div');
+		
+		function applyContentStyles() {
+		  Object.assign(content.style, {
+			overflowY: 'auto',
+			maxHeight: '80vh',
+			width: '90%',
+			margin: '0 auto',
+			paddingRight: '15px',
+		  });
+		}
+        fetch(`${page.toLowerCase()}.html`)
+            .then(response => {
+                if (!response.ok) {
+                    console.warn(`${page.toLowerCase()} content not found, using placeholder.`);
+                    return Promise.reject();
+                }
+                return response.text();
+            })
+            .then(data => {
+                content.innerHTML = data;
+                applyContentStyles();
+                content.querySelectorAll('p').forEach(p => p.style.marginBottom = '1em');
+            })
+            .catch(() => {
+                content.textContent = `This is the Vermont Golden Dome Committee Meeting ${page} page.`;
+                applyContentStyles();
+                content.style.lineHeight = '1.5';
+            })
+            .finally(() => {
+                modal.appendChild(content);
+
+                if (autoShow) {
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.id = 'doNotShowAgain';
+                    const label = document.createElement('label');
+                    label.htmlFor = 'doNotShowAgain';
+                    label.textContent = "Don't show this again";
+                    label.style.marginLeft = '10px';
+
+                    const checkboxContainer = document.createElement('div');
+                    checkboxContainer.style.position = 'absolute';
+                    checkboxContainer.style.bottom = '10px';
+                    checkboxContainer.style.left = '10px';
+                    checkboxContainer.appendChild(checkbox);
+                    checkboxContainer.appendChild(label);
+                    modal.appendChild(checkboxContainer);
+                }
+
+                const okButton = document.createElement('button');
+                okButton.textContent = 'OK';
+                okButton.style.marginTop = '10px';
+                okButton.style.float = 'right';
+                okButton.addEventListener('click', () => {
+                    if (autoShow && document.getElementById('doNotShowAgain').checked) {
+                        localStorage.setItem(`doNotShow${page}`, 'true');
+                    }
+                    document.body.removeChild(overlay);
+                    document.body.removeChild(modal);
+                });
+                modal.appendChild(okButton);
+                document.body.appendChild(modal);
+            });
+    }
+
+    document.getElementById('aboutButton').addEventListener('click', function () {
+		showAboutDialog();       
+    });
+
+    // Share Button Modal Dialog
+	 // The share dialog generator function.
+	function showShareDialog(allowSelection, subjectTextBase, contentTextBase) {
+		// Create a container for the share dialog.
+		var container = document.createElement("div");
+		container.id = "share-dialog";
+		container.innerHTML = `
+		  <style>
+			/* Embedded style for the share dialog */
+			#share-dialog {
+			  position: fixed;
+			  top: 20%;
+			  left: 50%;
+			  transform: translateX(-50%);
+			  background: #fff;
+			  border: 1px solid #ccc;
+			  padding: 2em 1em 1em 1em;
+			  z-index: 1000;
+			  max-width: 90%;
+			  box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+			  overflow: hidden;
+			  text-align: center;
+			}
+			.share-dialog-content {
+			  position: relative;
+			}
+			.dialog-title {
+			  font-size: 1.25em;
+			  font-weight: bold;
+			  margin-bottom: 0.5em;
+			}
+			/* Close (X) icon in top right corner with no top margin */
+			#close-dialog {
+			  position: absolute;
+			  top: 0;
+			  right: 0;
+			  cursor: pointer;
+			}
+			.share-buttons-container {
+			  overflow-x: auto;
+			  margin: 1em 0;
+			}
+			table {
+			  border-collapse: collapse;
+			  white-space: nowrap;
+			  margin: 0 auto;
+			}
+			td {
+			  padding: 0.5em;
+			  vertical-align: top;
+			}
+			button.share-btn {
+			  background: none;
+			  border: none;
+			  cursor: pointer;
+			  text-align: center;
+			}
+			.btn-label {
+			  font-size: 0.75em;
+			  margin-top: 0.25em;
+			}
+			.selection-options {
+			  margin-bottom: 1em;
+			  text-align: left;
+			}
+			.selection-options label {
+			  display: block;
+			  margin-bottom: 0.5em;
+			}
+		  </style>
+
+		  <div class="share-dialog-content">
+			<!-- Close (X) icon in top right -->
+			<div id="close-dialog">
+			  <svg width="24" height="24" viewBox="0 0 24 24">
+				<path d="M18 6L6 18M6 6l12 12" stroke="black" stroke-width="2" stroke-linecap="round"/>
+			  </svg>
+			</div>
+			<!-- Dialog Title -->
+			<div class="dialog-title">Share</div>
+			<!-- Clip checkbox: only added if allowSelection is true -->
+			${ allowSelection ? `
+			  <div id="selection-options" class="selection-options">
+				<label>
+				  <input type="checkbox" id="chk-start" >
+				  <span id="time-range-label">Clip only: start at ${Math.floor(startTime/1000)}; end at ${Math.ceil(endTime/1000)}</span>
+				</label>
+			  </div>
+			` : `` }
+			<div class="share-buttons-container">
+			  <table id="share-buttons-table">
+				<tr>
+				  <!-- Email -->
+				  <td>
+					<button class="share-btn" data-site="email">
+					  <svg width="24" height="24" viewBox="0 0 24 24">
+						<path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+					  </svg>
+					  <div class="btn-label">Email</div>
+					</button>
+				  </td>
+				  <!-- Copy Link -->
+				  <td>
+					<button class="share-btn" data-site="copy">
+					  <svg width="24" height="24" viewBox="0 0 24 24">
+						<path d="M3 3h6v2H5v14h14v-4h2v6H3V3zm14-2h-4.18C12.4 1 11.21 1.79 10.6 2.9L9.17 5H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h6v-2H5V7h4.17l1.43-2.1C11.79 4.79 12.96 4 14.82 4H19a2 2 0 0 1 2 2v4h-2V5a1 1 0 0 0-1-1z"/>
+					  </svg>
+					  <div class="btn-label">Copy Link</div>
+					</button>
+				  </td>
+				  <!-- Facebook -->
+				  <td>
+					<button class="share-btn" data-site="facebook">
+					  <svg width="24" height="24" viewBox="0 0 24 24">
+						<path d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.891h-2.33v6.987C18.343 21.128 22 16.991 22 12z"/>
+					  </svg>
+					  <div class="btn-label">Facebook</div>
+					</button>
+				  </td>
+				  <!-- X (formerly Twitter) -->
+				  <td>
+					<button class="share-btn" data-site="x">
+					  <svg width="24" height="24" viewBox="0 0 273.5 222.3">
+						<path fill="currentColor" d="M243.5,0H195l-59.7,76.1L75.7,0H0l108.1,111.3L0,222.3h47.8l48.1-61.3l48.1,61.3H273.5L165.5,111.3L243.5,0z"/>
+					  </svg>
+					  <div class="btn-label">X</div>
+					</button>
+				  </td>
+				  <!-- LinkedIn -->
+				  <td>
+					<button class="share-btn" data-site="linkedin">
+					  <svg width="24" height="24" viewBox="0 0 24 24">
+						<path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.762 2.239 5 5 5h14c2.762 0 5-2.238 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-10h3v10zm-1.5-11.25c-.966 0-1.75-.784-1.75-1.75s.784-1.75 1.75-1.75 1.75.784 1.75 1.75-.784 1.75-1.75 1.75zm13.5 11.25h-3v-5.5c0-1.103-.897-2-2-2s-2 .897-2 2v5.5h-3v-10h3v1.5c.828-1.242 2.28-2 3.5-2 2.21 0 4 1.79 4 4v6z"/>
+					  </svg>
+					  <div class="btn-label">LinkedIn</div>
+					</button>
+				  </td>
+				  <!-- Reddit -->
+				  <td>
+					<button class="share-btn" data-site="reddit">
+					  <svg width="24" height="24" viewBox="0 0 512 512">
+						<path d="M440 184c-22 0-40 18-40 40 0 22 18 40 40 40 22 0 40-18 40-40 0-22-18-40-40-40zM136 184c-22 0-40 18-40 40 0 22 18 40 40 40 22 0 40-18 40-40 0-22-18-40-40-40zm120-80c-66.3 0-120 53.7-120 120 0 20 4 39 11 57-26 10-49 27-66 49-6 8-2 19 8 19h21c10 0 16-11 10-19-12-16-19-33-19-50 0-51.9 42.1-94 94-94s94 42.1 94 94c0 17-7 34-19 50-6 8 0 19 10 19h21c10 0 14-11 8-19-17-22-40-39-66-49 7-18 11-37 11-57 0-66.3-53.7-120-120-120z"/>
+					  </svg>
+					  <div class="btn-label">Reddit</div>
+					</button>
+				  </td>
+				  <!-- WhatsApp -->
+				  <td>
+					<button class="share-btn" data-site="whatsapp">
+					  <svg width="24" height="24" viewBox="0 0 24 24">
+						<path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.272-.1-.47-.149-.668.15-.198.297-.767.967-.94 1.164-.173.198-.347.223-.644.074-.297-.149-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.058-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.148-.668-1.611-.916-2.206-.242-.579-.487-.5-.668-.51-.173-.007-.371-.009-.57-.009-.198 0-.52.074-.792.371-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.095 3.2 5.077 4.487.709.306 1.262.489 1.694.626.711.227 1.36.195 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347zM12.004 2C6.486 2 2 6.486 2 12.004c0 2.116.552 4.095 1.513 5.818L2 22l4.262-1.513C7.905 21.448 9.884 22 12.004 22 17.522 22 22 17.522 22 12.004 22 6.486 17.522 2 12.004 2z"/>
+					  </svg>
+					  <div class="btn-label">WhatsApp</div>
+					</button>
+				  </td>
+				</tr>
+			  </table>
+			</div>
+		  </div>
+		`;
+		document.body.appendChild(container);
+		if (allowSelection) {
+			document.getElementById("chk-start").checked=true;
+		}
+
+		// Base URL computed as origin + pathname.
+		var baseUrl = window.location.origin + window.location.pathname;
+
+		// Define shareConfig so it is available for event handlers.
+		const shareConfig = {
+		  facebook: { base: "https://www.facebook.com/sharer/sharer.php", urlParam: "u" },
+		  x:        { base: "https://twitter.com/intent/tweet", urlParam: "url" },
+		  linkedin: { base: "https://www.linkedin.com/sharing/share-offsite/", urlParam: "url" },
+		  reddit:   { base: "https://www.reddit.com/submit", urlParam: "url", titleParam: "title" },
+		  whatsapp: { base: "https://wa.me/", urlParam: "text" }
+		};
+
+
+		// Set up click listeners.
+    var shareButtons = container.querySelectorAll(".share-btn");
+    shareButtons.forEach(function(btn) {
+      btn.addEventListener("click", function() {
+        var site = btn.getAttribute("data-site");
+		var chk = document.getElementById("chk-start");
+		var fullUrl=baseUrl;
+		var contentText=contentTextBase;
+		var subjectText=subjectTextBase;
+		if (allowSelection && chk && chk.checked) {
+
+         	fullUrl=baseUrl + "?rb=" + savedSelection.startOffset + "&re=" + savedSelection.endOffset;
+			subjectText='Clip from '+subjectTextBase;
+			contentText='Check out the clip: ';
+		}
+        if (site === "copy") {
+          navigator.clipboard.writeText(fullUrl).then(function() {
+            alert("Link copied to clipboard!");
+          }).catch(function(err) {
+            alert("Failed to copy link.");
+          });
+        } else if (site === "email") {
+          var mailtoLink = "mailto:?subject=" + encodeURIComponent(subjectText) +
+                           "&body=" + encodeURIComponent(contentText + "\n\n" + fullUrl);
+          window.location.href = mailtoLink;
+        } else {
+          var shareLink = "";
+          if (site === "facebook" || site === "linkedin") {
+            var params = new URLSearchParams();
+            params.set(shareConfig[site].urlParam, fullUrl);
+            shareLink = shareConfig[site].base + "?" + params.toString();
+          } else if (site === "x") {
+            var params = new URLSearchParams();
+            params.set("url", fullUrl);
+            params.set("text", subjectText);
+            shareLink = shareConfig[site].base + "?" + params.toString();
+          } else if (site === "reddit") {
+            var params = new URLSearchParams();
+            params.set(shareConfig[site].urlParam, fullUrl);
+            params.set(shareConfig[site].titleParam, subjectText);
+            shareLink = shareConfig[site].base + "?" + params.toString();
+          } else if (site === "whatsapp") {
+            var params = new URLSearchParams();
+            params.set("text", subjectText + "\n\n" + fullUrl);
+            shareLink = shareConfig[site].base + "?" + params.toString();
+          }
+          if (shareLink) {
+            window.open(shareLink, "_blank");
+          }
+        }
+		container.remove()
+      });
+    });
+
+    // Close dialog when the X is clicked.
+    container.querySelector("#close-dialog").addEventListener("click", function() {
+	  container.remove()
+    });
+  }
+
+	  async function fileExists(filePath) {
+		try {
+		  const response = await fetch(filePath, { method: 'HEAD' });
+		  return response.ok;
+		} catch (error) {
+		  return false;
+		}
+	  }
+	if (!navigator.webdriver){
+		if  (!localStorage.getItem('doNotShowAbout')) {
+			showAboutDialog(page='About',autoshow=true);
+		} else {
+			var featureDiv=document.getElementById("newfeature");
+			if (featureDiv){
+				let newFeature=featureDiv.textContent.trim();
+				(async function() {
+					if (await fileExists(newFeature + ".html")) {
+					  if (!localStorage.getItem('doNotShow' + newFeature)) {
+						showAboutDialog(page=newFeature,autoshow=true);
+					  }
+					}
+				 })();
+						
+			}
+		}
+	}
+  
+  document.getElementById('shareButton').addEventListener('click', function () {
+    if (typeof hasSelection==='undefined') { //not an st window
+		const subject = document.getElementById('email-subject')?.textContent.trim() || 'Fast free verifiable SmartTranscripts of latest VT legislative committee meetings';
+		const body = document.getElementById('email-body')?.textContent.trim() || 
+			"This is useful for covering meetings you couldn't get to without watching the whole video. Instant access to video clips of whatever you're interested in.";
+		showShareDialog(false,subject,body);
+	} else {
+		const subject = document.getElementById('email-subject')?.textContent.trim() || 'SmartTranscript of ' + document.title;
+        const body = document.getElementById('email-body')?.textContent.trim() || 'This is useful for seeing what happened at the meeting without wading through the whole transcript:';
+		showShareDialog(hasSelection, subject, body);
+	}
+  });
+</script>
