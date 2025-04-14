@@ -95,7 +95,22 @@ The factory currently runs partly on a Google debian instance and partly on AWS.
    - youtubeapi.com
    - yt_dlp
    - ffmpeg
+## Web Objects ##
+These all must be in the Disply Bucket - the public bucket from which the index page, SmartTranscript pages, amd meeting summaries are served. All of these are customized to GoldenDome to some extent.
 
+1. **about.html** an optional about for both the index page and SmartTranscripts.
+2. **dome_closed.png** icon for a closed folder on index page. Should be an svg instead.
+3. **dome_open.png** icon for an open folder on index page. Should be an svg instead.
+4. **favicon.ico**
+5. **footer.html** optional html and javascript to create a footer for both index page and SmartTranscripts.
+6. **footer_loader_script.js** optional code to load the footer for both index and SmartTranscripts.
+7. **index.html** index page for the GoldenDome application Reads the directory of the bucket it is loaded from to create a visible hierarchy of available SmartTrancripts of meetings, provides a place to display a summary of a chosen meeting, and displays a Google search function. Links to SmartTrancripts.
+8. **search_dropdown_styles.css** style sheet for dropdown menus and objects they create dynamically.
+9. **searchbox.png** graphic for searchbox.
+10. **smart_trancript.css** style sheet for SmartTrancripts
+11. **standardVideo.js** implemntation of SmartTrancript functionality. Controls the video player based on selections in transcript.
+12. **statehouse.png** drawing of the Vernmont Staehouse used as background for the index page.
+13. **youtubePlayer.js** maps standard video player API to YouTube video player API so that standardVideo.js can function with a yt viewer. 
 ## Samples
 
 1. **committees.pk1**
