@@ -105,19 +105,22 @@ These all must be in the Disply Bucket - the public bucket from which the index 
 5. **footer.html** optional html and javascript to create a footer for both index page and SmartTranscripts.
 6. **footer_loader_script.js** optional code to load the footer for both index and SmartTranscripts.
 7. **index.html** index page for the GoldenDome application Reads the directory of the bucket it is loaded from to create a visible hierarchy of available SmartTrancripts of meetings, provides a place to display a summary of a chosen meeting, and displays a Google search function. Links to SmartTrancripts.
-8. **search_dropdown_styles.css** style sheet for dropdown menus and objects they create dynamically.
+8. **search_dropdown_styles.css** stylesheet for dropdown menus and objects they create dynamically.
 9. **searchbox.png** graphic for searchbox.
-10. **smart_trancript.css** style sheet for SmartTrancripts
+10. **smart_trancript.css** stylesheet for SmartTrancripts
 11. **standardVideo.js** implemntation of SmartTrancript functionality. Controls the video player based on selections in transcript.
 12. **statehouse.png** drawing of the Vernmont Staehouse used as background for the index page.
-13. **youtubePlayer.js** maps standard video player API to YouTube video player API so that standardVideo.js can function with a yt viewer. 
+13. **youtubePlayer.js** maps standard video player API to YouTube video player API so that standardVideo.js can function with a yt viewer.
+
+## Buckets ##
+GoldenDome is written to be deployed in AWS S3 buckets. SmartTrancripts, themselves, can be served from anywhere as long as their supporting objects like stylesheets and javascript are on the same server. The index page, however, uses AWS APIs to load obects and to read the directory of the url it is served from. Since S3 buckets must have uniques names, any other implemntation will have to have different bucket names. Other than a reference in the index page, all references to bucket names are localized to the config.json files for the lambda functions and my.env file for the json2html lambda function. 
 ## Samples
 
 1. **committees.pk1**
 - pickle of a dictionary where the keys are committee handles and the values are the YouTube IDs of the channels which correspond to the committee. Input to youtubetos3.py. These were scraped from the Vermont legislative directory. Use for other jurisdictions requires building your own dictionary in the same format.
 2. **weekly.pk1**
 - pickle of an optional dictionary used as context for ChatGPT called from json2html lambda function when assigning names to speakers in a trancript. If ppresent must bin the bucket which json transcripts are retireved from. GoldenDome specific and scraped from Vermont Legislature website but format could be used by other implementations, Major key is committee name. Dictionary under that has key "assistants", whose value is a list of committee assisatnts and their titles, and "speakers" which is list of subdictionaries. Each of these subdictionaries has a key "date", whose value is a date in the form YYYY-MM-DD, and a key "speakers", whose value is a list of speaker names and titles.
-3. /<committeename>.txt
+3. \<committeename>.txt
   - optional text files for each committee. If present must be in the public display bucket. They are used both as context for ChatGPT called from json2html lambda function when assigning names to speakers and by SmartTranscript web pages to support the "email to committee" option. There is one line for each committee member which contains comma-separeted member name, role on committee, part affiliation, district, and email address.These were scraped from the Vermont legislative directory. Use for other jurisdictions requires building your own files in the same format.
 
 
