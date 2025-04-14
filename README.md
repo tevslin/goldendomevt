@@ -113,7 +113,7 @@ These all must be in the Disply Bucket - the public bucket from which the index 
 13. **youtubePlayer.js** maps standard video player API to YouTube video player API so that standardVideo.js can function with a yt viewer.
 
 ## Buckets ##
-GoldenDome is written to be deployed in AWS S3 buckets. SmartTrancripts, themselves, can be served from anywhere as long as their supporting objects like stylesheets and javascript are on the same server. The index page, however, uses AWS APIs to load obects and to read the directory of the url it is served from. Since S3 buckets must have uniques names, any other implemntation will have to have different bucket names. Other than a reference in the index page, all references to bucket names are localized to the config.json files for the lambda functions and my.env file for the json2html lambda function. 
+GoldenDome is written to be deployed in AWS S3 buckets. SmartTrancripts, themselves, can be served from anywhere as long as their supporting objects like stylesheets and javascript are on the same server. The index page, however, uses AWS APIs to load obects and to read the directory of the url it is served from. Since S3 buckets must have uniques names, any other implemntation will have to have different bucket names. Other than a reference in the index page, all references to bucket names are localized to the config.json files for the lambda functions and my.env file for the json2html lambda function. On the debian server, bucket names are localized to run_factory.sh,
 ## Samples
 
 1. **committees.pk1**
