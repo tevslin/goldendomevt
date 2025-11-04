@@ -1,7 +1,9 @@
 # GoldenDomeVT
 
-## WIP
-is being loaded with the code which implements GoldenDomeVT.com and SmartTranscripts.
+## Overview
+Contains the code which implements GoldenDomeVT.com and and early version of SmartTranscripts.
+
+**Note:** a simpler to implement approach to creating SmartTranscripts, which does not have the same AWS dependencies as this repository and has better SmartTranscripts as output, is in <a href="https://github.com/tevslin/smarttranscripts">the my smarttranscripts repository </a>,
 
 This repository is particular to the site GoldenDomeVT.com and the factory for creating and serving SmartTranscripts of committee and floor meetings of the Vermont Legislature. SmartTrancripts are text transcripts linked to actual videos in such a way that a user can select text and immediately play the corresponding video clip in an imbedded viewer appropriate to the video type. Much of the code is general and can be used to create SmartTranscripts from a variety of online video sources, but some of it uses specific S3 Buckets and URLs whose names are hardcoded as defaults. These need to be replaced with folders or your own s3 buckets to run the code for other meetings. GoldenDomeVT runs from a list of YouTube channels used by the Vermont Legislature so, at least, needs a different channel list for meetings of other entities. It also uses a number of other files created from the webpages of the Vermont Legislature. Sample of these files are in the samples folder on this repository.
 ## The Factory
